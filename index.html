@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trafix - Metro Manila Navigation</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.3/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <style>
+        #map { height: 100vh; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.3/dist/leaflet-routing-machine.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script>
+    var map = L.map('map').setView([14.5995, 120.9842], 12); // Set initial view to Metro Manila (14.5995, 120.9842)
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // List of sample locations in Metro Manila with coordinates
+    var locations = {
+        "Makati": [14.5547, 121.0244],
+        "Quezon City": [14.6760, 121.0437],
+        "Manila": [14.5995, 120.9842],
+        "Taguig": [14.5200, 121.0509],
+        "Pasig": [14.5733, 121.0615],
+        "Mandaluyong": [14.5792, 121.0357],
+        "Pasay": [14.5378, 120.9993],
+        "Caloocan": [14.6416, 120.9762]
+    };
+
+    // Add markers for each location in Metro Manila
+    var locationMarkers = [];
+    for (var place in locations) {
+        var latlng = locations[place];
+        var marker = L.marker(latlng).bindPopup('<b>' + place + '</b>');
+        locationMarkers.push(marker);
+        marker.addTo(map);
+    }
+
+    // Initialize routeControl and geocoder
+    var routeControl;
+    var geocoder = L.Control.Geocoder.nominatim();
+
+    // Add search functionality using Leaflet's Geocoder control
+    geocoder.on('markgeocode', function(e) {
+        var latlng = e.geocode.center;
+        var name = e.geocode.name;
+
+        // Clear existing route if any
+        if (routeControl) {
+            map.removeControl(routeControl);
+        }
+
+        // Create new route
+        routeControl = L.Routing.control({
+            waypoints: [
+                L.latLng(14.5995, 120.9842), // Default start location (Manila)
+                latlng  // The new destination based on search
+            ],
+            routeWhileDragging: true,
+            geocoder: L.Control.Geocoder.nominatim(),
+            createMarker: function() { return null; } // Disable markers on route
+        }).addTo(map);
+
+        // Place a marker on the search result
+        L.marker(latlng).addTo(map).bindPopup(name).openPopup();
+
+        // Set the map view to the search result
+        map.setView(latlng, 14);
+    }).addTo(map);
+
+    // Remove unnecessary controls (Start and End and Directions box)
+    map.removeControl(L.control.zoom());
+
+    // Add search bar for searching specific locations in Metro Manila
+    var searchControl = new L.Control.Search({
+        layer: L.layerGroup(locationMarkers),
+        initial: false,
+        zoom: 12,
+        marker: true,
+    }).addTo(map);
+
+</script>
+
+</body>
+</html>
